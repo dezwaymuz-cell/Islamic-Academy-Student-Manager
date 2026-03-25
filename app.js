@@ -1,5 +1,6 @@
 const express = require('express');
 const connectDB = require('./models/db')
+require('dotenv').config();
 const path = require('path')
 const {saveStudent,getStudents} = require('./controllers/studentController');
 const app = express();
@@ -28,7 +29,7 @@ res.render('dashboard')
 
 app.use('/students',studentRouter);
 
-app.listen(3000,()=>{
+app.listen(process.env.PORT,()=>{
   console.log("server started");
   
 })
