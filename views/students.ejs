@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Directory | View All</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container-wide">
+        <a href="/" class="btn-back">
+            <span class="arrow">←</span> Back to Dashboard
+        </a>
+
+        <div class="glass-card">
+            <header class="table-header">
+                <div>
+                    <h1>Student Directory</h1>
+                    <p>Showing <%= st.length %> registered students.</p>
+                </div>
+                <a href="/students/new" class="btn-secondary">+ Add New</a>
+            </header>
+
+            <div class="table-container">
+                <table class="student-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Class</th>
+                            <th>Phone</th>
+                            <th>Place</th>
+                            <th>Admission Date</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (st.length > 0) { %>
+                            <% st.forEach(student => { %>
+                                <tr id="row-<%= student._id %>">
+                                    <td><span class="font-bold text-slate-800"><%= student.name %></span></td>
+                                    <td><%= student.age %></td>
+                                    <td><span class="badge"><%= student.class %></span></td>
+                                    <td><%= student.phone %></td>
+                                    <td><%= student.place %></td>
+                                    <td class="text-muted">
+                                        <%= new Date(student.admissionDate).toLocaleDateString('en-GB', {
+                                            day: '2-digit', month: 'short', year: 'numeric'
+                                        }) %>
+                                    </td>
+                                    <td>
+                                        <div class="action-btns-container">
+                                            <button class="btn-icon edit" title="Edit Student"
+                                                onclick="openEditModal('<%= student._id %>', '<%= student.name %>', '<%= student.age %>', '<%= student.class %>', '<%= student.phone %>', '<%= student.place %>')">
+                                                <span>✏️</span> Edit
+                                            </button>
+                                            
+                                            <button class="btn-icon delete" title="Delete Student"
+                                                onclick="confirmDelete('<%= student._id %>', '<%= student.name %>')">
+                                                <span>🗑️</span> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="empty-state">No students found in the database.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <header>
+                <h2>Update Student</h2>
+                <p>Modify fields and click save to apply changes.</p>
+            </header>
+            <form id="editForm" action="/students/update" method="POST" class="student-form">
+                <input type="hidden" name="id" id="edit-id">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" id="edit-name" required>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" name="age" id="edit-age" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Class</label>
+                        <input type="text" name="class" id="edit-class" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" id="edit-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Place</label>
+                    <input type="text" name="place" id="edit-place" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" id="save-btn" class="btn-submit" disabled>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content glass-card delete-warning">
+            <div class="warning-icon">⚠️</div>
+            <h2>Are you sure?</h2>
+            <p>You are about to remove <strong id="delete-student-name"></strong>. This action cannot be undone.</p>
+            
+            <form id="deleteForm" method="POST">
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('deleteModal')">No, Keep it</button>
+                    <button type="submit" class="btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let originalValues = {};
+
+        function openEditModal(id, name, age, className, phone, place) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-age').value = age;
+            document.getElementById('edit-class').value = className;
+            document.getElementById('edit-phone').value = phone;
+            document.getElementById('edit-place').value = place;
+            originalValues = { name, age, class: className, phone, place };
+            document.getElementById('editModal').classList.add('active');
+            document.getElementById('save-btn').disabled = true; 
+        }
+
+        function confirmDelete(id, name) {
+            document.getElementById('delete-student-name').innerText = name;
+            document.getElementById('deleteForm').action = `/students/delete/${id}`;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Change Tracker
+        document.getElementById('editForm').addEventListener('input', () => {
+            const currentValues = {
+                name: document.getElementById('edit-name').value,
+                age: document.getElementById('edit-age').value,
+                class: document.getElementById('edit-class').value,
+                phone: document.getElementById('edit-phone').value,
+                place: document.getElementById('edit-place').value
+            };
+            const hasChanged = Object.keys(originalValues).some(key => originalValues[key] != currentValues[key]);
+            document.getElementById('save-btn').disabled = !hasChanged;
+        });
+
+        // Close on click outside
+        window.onclick = (event) => {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
