@@ -1,37 +1,27 @@
 const express = require('express');
-const connectDB = require('./models/db')
 require('dotenv').config();
-const path = require('path')
-const {saveStudent,getStudents} = require('./controllers/studentController');
+const connectDB = require('./models/db');
+const path = require('path');
 const app = express();
 
 const studentRouter = require('./routes/studentRoutes');
 
-
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('view engine','ejs');
+app.set('view engine', 'ejs');
 
 app.use(express.json());
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+  res.render('dashboard');
+});
 
+app.use('/students', studentRouter);
 
+const PORT = process.env.PORT || 3000;
 
-app.get('/',(req,res)=>{
-res.render('dashboard')
-//  getStudents()
-//  .then((st)=>{
-//   console.log("reached");
-  
-//   res.render('students',{st})
-//  })
-})
-
-app.use('/students',studentRouter);
-
-app.listen(process.env.PORT,()=>{
-  console.log("server started");
-  
-})
+app.listen(PORT, () => {
+  console.log(`server started on ${PORT}`);
+});
 
 connectDB();
